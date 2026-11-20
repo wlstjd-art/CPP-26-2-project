@@ -1,5 +1,5 @@
 #include <iostream>
-#include <conio.h>  //ai가알려준거...! 키보드 인풋 함수!
+#include <conio.h>  //키보드 인풋 함수!
 #include <windows.h>    //슬립펑션! 추가하고싶은루프안에 sleep을넣어서 적당한속도로!
 using namespace std;
 
