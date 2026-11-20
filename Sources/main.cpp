@@ -1,5 +1,6 @@
 #include <iostream>
 #include <conio.h>  //ai가알려준거...! 키보드 인풋 함수!
+#include <windows.h>    //슬립펑션! 추가하고싶은루프안에 sleep을넣어서 적당한속도로!
 using namespace std;
 
 const int W = 30; //판 가로길이
@@ -36,12 +37,17 @@ void drawBoard()
 
 int main()
 {       
+    char dir = 'd';  //처음은 오른쪽출발!
 
     while(isAlive){
         
         system("cls");      //매
         drawBoard();
-        switch (_getch())   //머리움직이기! //
+        if(_kbhit()){
+            dir = _getch();
+        }
+
+        switch (dir)   //머리움직이기! //
         {
         case 'w':
             headY --;
@@ -58,10 +64,12 @@ int main()
         default:
             break;
         }
+
         if(headX == 0 || headX == W-1 
         || headY == 0 || headY == H-1) //벽만나면죽음!!
             isAlive = 0;
-        
+
+        Sleep(50);     
 
     }
 
