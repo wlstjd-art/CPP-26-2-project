@@ -1,4 +1,5 @@
 #include <iostream>
+#include <conio.h>  //ai가알려준거...! 키보드 인풋 함수!
 using namespace std;
 
 const int W = 30; //판 가로길이
@@ -6,6 +7,7 @@ const int H = 15; //세로길이
 
 int headX = W/2, headY = H/2;  //머리 위치선언!
 
+bool isAlive = true;
 
 void drawBoard()
 {   
@@ -33,9 +35,35 @@ void drawBoard()
 
 
 int main()
-{   
-    drawBoard();
+{       
 
+    while(isAlive){
+        
+        system("cls");      //매
+        drawBoard();
+        switch (_getch())   //머리움직이기! //
+        {
+        case 'w':
+            headY --;
+            break;
+        case 's':
+            headY ++;
+            break;
+        case 'a':
+            headX --;
+            break;
+        case 'd':
+            headX ++;
+            break;
+        default:
+            break;
+        }
+        if(headX == 0 || headX == W-1 
+        || headY == 0 || headY == H-1) //벽만나면죽음!!
+            isAlive = 0;
+        
+
+    }
 
     return 0;
 }
