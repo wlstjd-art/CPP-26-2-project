@@ -5,7 +5,7 @@
 #include <vector>   
 using namespace std;
 
-const int W = 35; //가로길이
+const int W = 45; //가로길이
 const int H = 25; //세로길이
 
 struct Vector2{
@@ -82,9 +82,9 @@ private:
     Vector2 fruitPos;
 public:
     fruit(){
-        
+        fruitPos = {-1, -1}; 
     }
-    void spawnFruit(snake snake1){
+    void spawnFruit(snake& snake1, fruit& fruit1){
         bool isCollision;
         do{ 
             isCollision = false;
@@ -92,12 +92,15 @@ public:
             fruitPos.x = (rand() % (W-2)) + 1;      
             fruitPos.y = (rand() % (H-2)) + 1;   
 
-            if(fruitPos.x == snake1.getheadPos().x && fruitPos.y == snake1.getheadPos().y){
-                isCollision = true;
+            if(fruitPos.x == snake1.getheadPos().x && fruitPos.y == snake1.getheadPos().y){             //생성된 과일위치랑 현재머리위치검사
+                isCollision = true; 
             }
+            if(fruitPos.x == fruit1.fruitPos.x && fruitPos.y == fruit1.fruitPos.y){         //생성된 과일위치랑 원래있던 과일 위치검사
+                isCollision = true;
+            }          
             for(int i = 0; i < snake1.getbodyLength(); i++){
-                if(fruitPos.x == snake1.getBody(i).x && fruitPos.y == snake1.getBody(i).y)  
-                    isCollision = true;
+                if(fruitPos.x == snake1.getBody(i).x && fruitPos.y == snake1.getBody(i).y)      //생성된 과일위치랑 몸통들위치검사
+                    isCollision = true;     
             }
         }while(isCollision);
     }
@@ -114,7 +117,7 @@ public:
         isalive = true;
         score = 0;
     }
-    void drawBoard(snake& snake1,fruit& fruit1){   
+    void drawBoard(snake& snake1,fruit& fruit1, fruit& fruit2){   
     for(int y = 0; y < H; y++){
         for(int x = 0; x < W; x++){
             if(y == 0){  //첫번째 라인일떈
@@ -127,6 +130,9 @@ public:
                 cout << '@';    //뱀의 머리 그리기!
             }
             else if(x == fruit1.getfruitPos().x && y == fruit1.getfruitPos().y){
+                cout << 'F';
+            }
+            else if(x == fruit2.getfruitPos().x && y == fruit2.getfruitPos().y){
                 cout << 'F';
             }
             else{   
@@ -147,8 +153,8 @@ public:
         }
         cout << endl;
     }
-    cout << "점수 : " << score << endl;
-}
+        cout << "점수 : " << score << endl;
+    }
     int getscore(){ return score; }
     bool getisalive(){ return isalive; }
     void scoreplusplus(){ score++; }
@@ -166,14 +172,16 @@ int main()
     
     snake mysnake;
     fruit myfruit;
+    fruit myfruit2;
     gamemanager mygame;
 
-    myfruit.spawnFruit(mysnake);
+    myfruit.spawnFruit(mysnake,myfruit2);
+    myfruit2.spawnFruit(mysnake,myfruit);
     
     while(mygame.getisalive()){
         
         system("cls");      //콘솔 클리어
-        mygame.drawBoard(mysnake,myfruit);
+        mygame.drawBoard(mysnake,myfruit,myfruit2);
         
         if(_kbhit()){   //사용자입력받기
             mysnake.changedir(_getch());
@@ -182,14 +190,17 @@ int main()
         if(mysnake.getheadPos().x == myfruit.getfruitPos().x && mysnake.getheadPos().y == myfruit.getfruitPos().y){ 
             mygame.scoreplusplus();
             mysnake.bodyplusplus();
-            myfruit.spawnFruit(mysnake);
-        } 
-
+            myfruit.spawnFruit(mysnake,myfruit2);
+        }
+        else if(mysnake.getheadPos().x == myfruit2.getfruitPos().x && mysnake.getheadPos().y == myfruit2.getfruitPos().y){ 
+            mygame.scoreplusplus();
+            mysnake.bodyplusplus();
+            myfruit2.spawnFruit(mysnake,myfruit);
+        }
         if(mysnake.getheadPos().x == 0 || mysnake.getheadPos().x == W-1 
         || mysnake.getheadPos().y == 0 || mysnake.getheadPos().y == H-1) //벽만나면죽음!!
             mygame.setisalive(false);
         
-            
         mygame.gameover(mysnake);
             
         Sleep(100);     
