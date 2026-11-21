@@ -51,13 +51,24 @@ void drawBoard()
         }
         cout << endl;
     }
-    cout << "점수 : " << score;
+    cout << "점수 : " << score << endl;
 }
 void spawnFruit(){
-    do{
-        fruitPos.x = (rand() % (W-2)) + 1;       //혹시같으면
-        fruitPos.y = (rand() % (H-2)) + 1;      //다시뽑아야한다
-    }while(fruitPos.x == headPos.x && fruitPos.y == headPos.y);
+    bool isCollision;
+    do{ 
+        isCollision = false;
+
+        fruitPos.x = (rand() % (W-2)) + 1;      
+        fruitPos.y = (rand() % (H-2)) + 1;   
+
+        if(fruitPos.x == headPos.x && fruitPos.y == headPos.y){
+            isCollision = true;
+        }
+        for(int i = 0; i < bodyLength; i++){
+            if(fruitPos.x == body[i].x && fruitPos.y == body[i].y)  
+                isCollision = true;
+        }
+    }while(isCollision);
 }
 
 
