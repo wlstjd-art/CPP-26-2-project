@@ -19,12 +19,13 @@ private:
     Vector2 body[100];
     int bodyLength;
     char dir;
-    
+    bool selfcol;
 public:
     snake(){
         headPos = {W/2 , H/2};
         bodyLength = 0;
         dir = 'd';
+        selfcol = false;
     }
     Vector2 getheadPos(){ return headPos; }
     Vector2 getBody(int i){ return body[i]; }
@@ -67,7 +68,12 @@ public:
         }
     }
     bool selfcollision(){
-
+        bool a = false;
+        for(int i = 0; i < bodyLength; i++){
+            if(headPos.x == body[i].x && headPos.y == body[i].y)
+                a = true;
+        }
+        return a;
     }
 };
 
@@ -147,6 +153,11 @@ public:
     bool getisalive(){ return isalive; }
     void scoreplusplus(){ score++; }
     void setisalive(bool a){ this->isalive = a; }
+    void gameover(snake& snake1){
+        if(snake1.selfcollision()){
+            isalive = false;
+        }
+    }
 };
 
 int main()
@@ -178,6 +189,9 @@ int main()
         || mysnake.getheadPos().y == 0 || mysnake.getheadPos().y == H-1) //벽만나면죽음!!
             mygame.setisalive(false);
         
+            
+        mygame.gameover(mysnake);
+            
         Sleep(100);     
     }
         
