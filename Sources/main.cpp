@@ -2,17 +2,20 @@
 #include <conio.h>  //키보드 인풋 함수!
 #include <windows.h>    //슬립펑션! 추가하고싶은루프안에 sleep을넣어서 적당한속도로!
 #include <ctime>    
+#include <vector>   
 using namespace std;
-
-const int W = 25; //가로길이
-const int H = 15; //세로길이
 struct Vector2{
     int x;
     int y;
 };
+const int W = 35; //가로길이
+const int H = 25; //세로길이
 int score = 0; 
 Vector2 headPos{W/2, H/2};
 Vector2 fruitPos{};
+Vector2 body[100];
+int bodyLength = 0;
+
 
 void drawBoard()
 {   
@@ -30,10 +33,18 @@ void drawBoard()
             else if(x == fruitPos.x && y == fruitPos.y){
                 cout << 'F';
             }
-            else{   //나머지라인일땐 j가 0일떄랑 j의끝에서만 출력한다!
-                if(x == 0)  cout << '#';    //j가 0일때
+            else{   
+                if(x == 0)  cout << '#';    //x가 0일때
                 else if(x == W-1)   cout << '#';    //끝일때
-                else    cout << ' '; //디폴트 빈칸들
+                else if(x > 0 && x < W-1){  
+                    
+                    for(int i = 0; i < bodyLength; i++){
+                        if(body[i].x == x && body[i].y == y){
+                            cout << 'o';
+                        }
+                    }
+                    cout << ' '; //디폴트 빈칸들
+                }    
             }
         }
         cout << endl;
@@ -47,20 +58,23 @@ void spawnFruit(){
     }while(fruitPos.x == headPos.x && fruitPos.y == headPos.y);
 }
 
+
+
 int main()
 {       
     srand(time(NULL));  
     
     
-    
     char dir = 'd';  //처음은 오른쪽출발!
     bool isAlive = true;
     spawnFruit();
+    
     while(isAlive){
         
-        system("cls");      
-        
+        system("cls");      //콘솔 클리어
         drawBoard();
+        
+
         if(_kbhit()){
             char Tempdir = _getch();
             if(Tempdir == 'w'||Tempdir == 'a'||Tempdir == 's'||Tempdir == 'd'){   // w , a, s, d일떄만 키보드인풋 허용!
@@ -74,25 +88,32 @@ int main()
                     dir != 'a' ? dir = Tempdir : dir = dir;
             }
         }
-        switch (dir)   //머리움직이기! 
-        {
-        case 'w':
-            headPos.y --;
-            break;
-        case 's':
-            headPos.y ++;
-            break;
-        case 'a':
-            headPos.x --;
-            break;
-        case 'd':
-            headPos.x ++;
-            break;
-        default:
-            break;
+        for(int i = bodyLength - 1; i >= 1; i--){       //
+            body[i] = body[i-1];                        //
+        }                                               //
+        if(bodyLength > 0)  body[0] = headPos;          //
+
+        switch(dir){ //머리좌표변경!
+            case 'w':
+                headPos.y --;
+                break;
+            case 's':
+                headPos.y ++;
+                break;
+            case 'a':
+                headPos.x --;
+                break;
+            case 'd':
+                headPos.x ++;
+                break;
+            default:
+                break;
         }
-        if(headPos.x == fruitPos.x && headPos.y == fruitPos.y){
+        cout << "(" << headPos.x << ", " << headPos.y << ")" << "(" << body[0].x << ", " << body[0].y << ")"; 
+
+        if(headPos.x == fruitPos.x && headPos.y == fruitPos.y){ 
             score++;
+            bodyLength++;
             spawnFruit();
         } 
 
@@ -100,8 +121,7 @@ int main()
         || headPos.y == 0 || headPos.y == H-1) //벽만나면죽음!!
             isAlive = false;
         
-        Sleep(55);     
+        Sleep(100);     
     }
-    return 0;
         
 }
