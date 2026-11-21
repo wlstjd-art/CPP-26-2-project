@@ -66,6 +66,9 @@ public:
                 break;
         }
     }
+    bool selfcollision(){
+
+    }
 };
 
 class fruit{
@@ -96,7 +99,16 @@ public:
 
 };
 
-void drawBoard(snake& snake1,fruit& fruit1,int score){   
+class gamemanager{
+private:
+    bool isalive;
+    int score;
+public:
+    gamemanager(){
+        isalive = true;
+        score = 0;
+    }
+    void drawBoard(snake& snake1,fruit& fruit1){   
     for(int y = 0; y < H; y++){
         for(int x = 0; x < W; x++){
             if(y == 0){  //첫번째 라인일떈
@@ -131,6 +143,11 @@ void drawBoard(snake& snake1,fruit& fruit1,int score){
     }
     cout << "점수 : " << score << endl;
 }
+    int getscore(){ return score; }
+    bool getisalive(){ return isalive; }
+    void scoreplusplus(){ score++; }
+    void setisalive(bool a){ this->isalive = a; }
+};
 
 int main()
 {       
@@ -138,29 +155,28 @@ int main()
     
     snake mysnake;
     fruit myfruit;
-    int score = 0;
-    bool isAlive = true;
+    gamemanager mygame;
 
     myfruit.spawnFruit(mysnake);
     
-    while(isAlive){
+    while(mygame.getisalive()){
         
         system("cls");      //콘솔 클리어
-        drawBoard(mysnake,myfruit,score);
+        mygame.drawBoard(mysnake,myfruit);
         
         if(_kbhit()){   //사용자입력받기
             mysnake.changedir(_getch());
         }
         mysnake.move();
         if(mysnake.getheadPos().x == myfruit.getfruitPos().x && mysnake.getheadPos().y == myfruit.getfruitPos().y){ 
-            score++;
+            mygame.scoreplusplus();
             mysnake.bodyplusplus();
             myfruit.spawnFruit(mysnake);
         } 
 
         if(mysnake.getheadPos().x == 0 || mysnake.getheadPos().x == W-1 
         || mysnake.getheadPos().y == 0 || mysnake.getheadPos().y == H-1) //벽만나면죽음!!
-            isAlive = false;
+            mygame.setisalive(false);
         
         Sleep(100);     
     }
