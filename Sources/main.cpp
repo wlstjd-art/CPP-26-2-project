@@ -37,13 +37,15 @@ void drawBoard()
                 if(x == 0)  cout << '#';    //x가 0일때
                 else if(x == W-1)   cout << '#';    //끝일때
                 else if(x > 0 && x < W-1){  
-                    
+                    bool isEmpty = true;    //버그해결방법은
                     for(int i = 0; i < bodyLength; i++){
                         if(body[i].x == x && body[i].y == y){
                             cout << 'o';
+                            isEmpty = false;
                         }
                     }
-                    cout << ' '; //디폴트 빈칸들
+                    if(isEmpty)
+                        cout << ' '; //디폴트 빈칸들
                 }    
             }
         }
@@ -109,8 +111,10 @@ int main()
             default:
                 break;
         }
-        cout << "(" << headPos.x << ", " << headPos.y << ")" << "(" << body[0].x << ", " << body[0].y << ")"; 
-
+        cout << "(" << headPos.x << ", " << headPos.y << ")";
+            for(int i = 0; i < bodyLength ; i++){
+                cout << "(" << body[i].x << ", " << body[i].y << ")";
+            }
         if(headPos.x == fruitPos.x && headPos.y == fruitPos.y){ 
             score++;
             bodyLength++;
