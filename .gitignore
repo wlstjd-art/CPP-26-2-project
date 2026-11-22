@@ -1,0 +1,16 @@
+*.exe
+cpp자료들/
+Sources/main2.cpp
+Sources/main3.cpp
+Sources/tempCodeRunnerFile.cpp
+제안서_김진성_213549.pdf
+제안서양식.docx
+진척보고서양식.docx
+중간보고서_김진성_213549.docx
+중간보고서_김진성_213549.pdf
+report_assets/
+진척보고서_김진성_213549.docx
+진척보고서_김진성_213549.pdf
+Reports/images/
+VOID_SNAKE_중간보고서_1차_김진성_213549_수정본.pdf
+report_gitignored
