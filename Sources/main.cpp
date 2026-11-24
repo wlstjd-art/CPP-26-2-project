@@ -7,22 +7,10 @@ using namespace std;
 
 const int W = 45; //가로길이
 const int H = 25; //세로길이
-const int FRUITCOUNT = 25; //과일갯수!
 
 struct Vector2{
     int x;
     int y;
-};
-
-class fruit{
-private:
-    Vector2 fruitPos;
-public:
-    fruit(){
-        fruitPos = {-1, -1}; 
-    }
-    Vector2 getfruitPos(){ return fruitPos; }
-    void setfruitpos(int x, int y){ fruitPos.x = x; fruitPos.y = y; }
 };
 
 class snake{
@@ -79,7 +67,6 @@ public:
                 break;
         }
     }
-
     bool selfcollision(){
         bool a = false;
         for(int i = 0; i < bodyLength; i++){
@@ -90,101 +77,99 @@ public:
     }
 };
 
+class fruit{
+private:
+    Vector2 fruitPos;
+public:
+    fruit(){
+        fruitPos = {-1, -1}; 
+    }
+    void spawnFruit(snake& snake1, fruit& fruit1){
+        bool isCollision;
+        do{ 
+            isCollision = false;
 
+            fruitPos.x = (rand() % (W-2)) + 1;      
+            fruitPos.y = (rand() % (H-2)) + 1;   
+
+            if(fruitPos.x == snake1.getheadPos().x && fruitPos.y == snake1.getheadPos().y){             //생성된 과일위치랑 현재머리위치검사
+                isCollision = true; 
+            }
+            if(fruitPos.x == fruit1.fruitPos.x && fruitPos.y == fruit1.fruitPos.y){         //생성된 과일위치랑 원래있던 과일 위치검사
+                isCollision = true;
+            }          
+            for(int i = 0; i < snake1.getbodyLength(); i++){
+                if(fruitPos.x == snake1.getBody(i).x && fruitPos.y == snake1.getBody(i).y)      //생성된 과일위치랑 몸통들위치검사
+                    isCollision = true;     
+            }
+        }while(isCollision);
+    }
+    Vector2 getfruitPos(){ return fruitPos; }
+
+};
 
 class gamemanager{
 private:
     bool isalive;
     int score;
-
+    vector<Vector2> pendingwalls;
 public:
     gamemanager(){
         isalive = true;
         score = 0;
     }
-    bool fruitspot(int x, int y, vector<fruit>& fruits){
-        for(int i = 0; i < fruits.size(); i++){
-            if(x == fruits[i].getfruitPos().x && y == fruits[i].getfruitPos().y)    return true;
-        }
-        return false;
-    }
-    void drawBoard(snake& snake1,vector<fruit>& fruits){   
-        for(int y = 0; y < H; y++){
-            for(int x = 0; x < W; x++){
-                if(y == 0){  //첫번째 라인일떈
-                    cout << '#';
-                }
-                else if(y == H-1){ //마지막라인일떈?
-                    cout << '#';
-                }
-                else if(x == snake1.getheadPos().x && y == snake1.getheadPos().y){
-                    cout << '@';    //뱀의 머리 그리기!
-                }
-                else if(fruitspot(x,y,fruits)){
-                    cout << 'F';
-                }
-                else{   
-                    if(x == 0)  cout << '#';    //x가 0일때
-                    else if(x == W-1)   cout << '#';    //끝일때
-                    else if(x > 0 && x < W-1){  
-                        bool isEmpty = true;    //버그해결
-                        for(int i = 0; i < snake1.getbodyLength(); i++){
-                            if(snake1.getBody(i).x == x && snake1.getBody(i).y == y){
-                                cout << 'o';
-                                isEmpty = false;
-                            }
-                        }
-                        if(isEmpty)
-                            cout << ' '; //디폴트 빈칸들
-                    }    
-                }
+    void drawBoard(snake& snake1,fruit& fruit1, fruit& fruit2){   
+    for(int y = 0; y < H; y++){
+        for(int x = 0; x < W; x++){
+            if(y == 0){  //첫번째 라인일떈
+                cout << '#';
             }
+            else if(y == H-1){ //마지막라인일떈?
+                cout << '#';
+            }
+            else if(x == snake1.getheadPos().x && y == snake1.getheadPos().y){
+                cout << '@';    //뱀의 머리 그리기!
+            }
+            else if(x == fruit1.getfruitPos().x && y == fruit1.getfruitPos().y){
+                cout << 'F';
+            }
+            else if(x == fruit2.getfruitPos().x && y == fruit2.getfruitPos().y){
+                cout << 'F';
+            }
+            else{   
+                if(x == 0)  cout << '#';    //x가 0일때
+                else if(x == W-1)   cout << '#';    //끝일때
+                else if(x > 0 && x < W-1){  
+                    bool isEmpty = true;    //버그해결
+                    for(int i = 0; i < snake1.getbodyLength(); i++){
+                        if(snake1.getBody(i).x == x && snake1.getBody(i).y == y){
+                            cout << 'o';
+                            isEmpty = false;
+                        }
+                    }
+                    if(isEmpty)
+                        cout << ' '; //디폴트 빈칸들
+                }    
+            }
+        }
         cout << endl;
     }
         cout << "점수 : " << score << endl;
+        cout << "예약된 벽 개수 : " << pendingwalls.size() << endl;
     }
     int getscore(){ return score; }
     bool getisalive(){ return isalive; }
     void scoreplusplus(){ score++; }
     void setisalive(bool a){ this->isalive = a; }
-    bool isoccupied(int x, int y, snake& snake1, vector<fruit>& fruits){
-        //1.머리랑
-        if(x == snake1.getheadPos().x && y == snake1.getheadPos().y){ return true; }
-        //2.몸통이랑
-        for(int i = 0; i < snake1.getbodyLength(); i++){
-            if(snake1.getBody(i).x == x && snake1.getBody(i).y == y){ return true; }
-        }
-        //3.과일들
-        for(int i = 0; i < fruits.size(); i++){
-            if(fruits[i].getfruitPos().x == x && fruits[i].getfruitPos().y == y)
-                return true;
-        }
-        return false;
-    }   
-    void spawnFruit(fruit& targetfruit, snake& snake1, vector<fruit>& fruits){
-        int x, y;
-        do{
-            x = (rand() % (W-2)) + 1;      
-            y = (rand() % (H-2)) + 1;   
-            
-        }while(isoccupied(x,y,snake1,fruits));
-            targetfruit.setfruitpos(x,y);
-    }
-    void checkeat(snake& snake1, vector<fruit>& fruits){
-        for(int i = 0; i < fruits.size(); i++){
-            if(fruits[i].getfruitPos().x == snake1.getheadPos().x && fruits[i].getfruitPos().y == snake1.getheadPos().y){
-                scoreplusplus();
-                snake1.bodyplusplus();
-                spawnFruit(fruits[i], snake1, fruits);
-            }
-        }
-    }
     void gameover(snake& snake1){
         if(snake1.selfcollision()){
             isalive = false;
         }
     }
-
+    void addpendingwall(const Vector2& fruitpos){     // 9-2주차 벡터써보기!
+        pendingwalls.push_back(fruitpos); //push_back으로
+    }
+    
 };
 
 int main()
@@ -192,25 +177,35 @@ int main()
     srand(time(NULL)); 
     
     snake mysnake;
+    fruit myfruit;
+    fruit myfruit2;
     gamemanager mygame;
-    vector<fruit> myfruits;
-    for(int i = 0; i < FRUITCOUNT; i++){
-        myfruits.push_back(fruit());
-        mygame.spawnFruit(myfruits.back(), mysnake, myfruits);
-    }
 
+    myfruit.spawnFruit(mysnake,myfruit2);
+    myfruit2.spawnFruit(mysnake,myfruit);
     
     while(mygame.getisalive()){
         
         system("cls");      //콘솔 클리어
-        mygame.drawBoard(mysnake,myfruits);
+        mygame.drawBoard(mysnake,myfruit,myfruit2);
         
         if(_kbhit()){   //사용자입력받기
             mysnake.changedir(_getch());
         }
         mysnake.move();
-        mygame.checkeat(mysnake, myfruits);
-        
+
+        if(mysnake.getheadPos().x == myfruit.getfruitPos().x && mysnake.getheadPos().y == myfruit.getfruitPos().y){ 
+            mygame.scoreplusplus(); //첫번째 과일
+            mysnake.bodyplusplus();
+            mygame.addpendingwall(myfruit.getfruitPos());
+            myfruit.spawnFruit(mysnake,myfruit2);
+        }
+        else if(mysnake.getheadPos().x == myfruit2.getfruitPos().x && mysnake.getheadPos().y == myfruit2.getfruitPos().y){ 
+            mygame.scoreplusplus(); //두번째 과일
+            mysnake.bodyplusplus();
+            mygame.addpendingwall(myfruit2.getfruitPos());
+            myfruit2.spawnFruit(mysnake,myfruit);
+        }
         if(mysnake.getheadPos().x == 0 || mysnake.getheadPos().x == W-1 
         || mysnake.getheadPos().y == 0 || mysnake.getheadPos().y == H-1) //벽만나면죽음!!
             mygame.setisalive(false);
