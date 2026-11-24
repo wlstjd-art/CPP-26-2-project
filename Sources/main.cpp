@@ -113,6 +113,7 @@ private:
     bool isalive;
     int score;
     vector<Vector2> pendingwalls;
+    vector<Vector2> walls;
 public:
     gamemanager(){
         isalive = true;
@@ -135,6 +136,9 @@ public:
             }
             else if(x == fruit2.getfruitPos().x && y == fruit2.getfruitPos().y){
                 cout << 'F';
+            }
+            else if(isWallAt(x,y)){     
+                cout << '#';        
             }
             else{   
                 if(x == 0)  cout << '#';    //x가 0일때
@@ -168,6 +172,38 @@ public:
     }
     void addpendingwall(const Vector2& fruitpos){     // 9-2주차 벡터써보기!
         pendingwalls.push_back(fruitpos); //push_back으로
+    }
+    void addWall(snake& snake1){
+        Vector2 head = snake1.getheadPos();
+
+        for(int i = (int)pendingwalls.size() - 1; i >= 0; i--){
+            
+            bool isSnakeOnit = false;
+            Vector2 a = pendingwalls[i];
+
+            if(a.x == head.x && a.y == head.y){
+                isSnakeOnit = true;
+            }
+
+            for(int j = 0; j < snake1.getbodyLength(); j++){
+                if(snake1.getBody(j).x == a.x && snake1.getBody(j).y == a.y){
+                    isSnakeOnit = true;
+                    break;
+                }
+            }
+            if(!isSnakeOnit){
+                walls.push_back(a);
+                pendingwalls.erase(pendingwalls.begin() + i);   //week9 erase_vector.cpp
+            }
+        }
+    }
+    bool isWallAt(int x, int y){
+        for(int i = 0; i < walls.size(); i++){
+            if(walls[i].x == x && walls[i].y == y){
+                return true;
+            }
+        }
+        return false;
     }
     void checkEatFruit(snake& mysnake, fruit& eatenFruit, fruit& otherFruit){   //eatenfruit함수화!
         //머리랑 과일이랑 닿았나?
@@ -203,6 +239,7 @@ int main()
             mysnake.changedir(_getch());
         }
         mysnake.move();
+        mygame.addWall(mysnake);
 
         mygame.checkEatFruit(mysnake,myfruit,myfruit2); 
         mygame.checkEatFruit(mysnake,myfruit2,myfruit); 
