@@ -169,7 +169,17 @@ public:
     void addpendingwall(const Vector2& fruitpos){     // 9-2주차 벡터써보기!
         pendingwalls.push_back(fruitpos); //push_back으로
     }
-    
+    void checkEatFruit(snake& mysnake, fruit& eatenFruit, fruit& otherFruit){   //eatenfruit함수화!
+        //머리랑 과일이랑 닿았나?
+        if(mysnake.getheadPos().x == eatenFruit.getfruitPos().x && 
+           mysnake.getheadPos().y == eatenFruit.getfruitPos().y){ 
+            
+            scoreplusplus();                           //점수올리기
+            mysnake.bodyplusplus();                    //몸통 늘리기
+            addpendingwall(eatenFruit.getfruitPos());  //벽 세울자리예약!
+            eatenFruit.spawnFruit(mysnake,otherFruit); //이과일만 스폰!
+        }
+    }
 };
 
 int main()
@@ -194,18 +204,9 @@ int main()
         }
         mysnake.move();
 
-        if(mysnake.getheadPos().x == myfruit.getfruitPos().x && mysnake.getheadPos().y == myfruit.getfruitPos().y){ 
-            mygame.scoreplusplus(); //첫번째 과일
-            mysnake.bodyplusplus();
-            mygame.addpendingwall(myfruit.getfruitPos());
-            myfruit.spawnFruit(mysnake,myfruit2);
-        }
-        else if(mysnake.getheadPos().x == myfruit2.getfruitPos().x && mysnake.getheadPos().y == myfruit2.getfruitPos().y){ 
-            mygame.scoreplusplus(); //두번째 과일
-            mysnake.bodyplusplus();
-            mygame.addpendingwall(myfruit2.getfruitPos());
-            myfruit2.spawnFruit(mysnake,myfruit);
-        }
+        mygame.checkEatFruit(mysnake,myfruit,myfruit2); 
+        mygame.checkEatFruit(mysnake,myfruit2,myfruit); 
+
         if(mysnake.getheadPos().x == 0 || mysnake.getheadPos().x == W-1 
         || mysnake.getheadPos().y == 0 || mysnake.getheadPos().y == H-1) //벽만나면죽음!!
             mygame.setisalive(false);
