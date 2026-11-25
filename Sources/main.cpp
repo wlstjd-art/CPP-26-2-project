@@ -84,7 +84,7 @@ public:
     fruit(){
         fruitPos = {-1, -1}; 
     }
-    void spawnFruit(snake& snake1, fruit& fruit1){
+    void spawnFruit(snake& snake1, fruit& fruit1, const vector<Vector2>& walls){
         bool isCollision;
         do{ 
             isCollision = false;
@@ -101,6 +101,11 @@ public:
             for(int i = 0; i < snake1.getbodyLength(); i++){
                 if(fruitPos.x == snake1.getBody(i).x && fruitPos.y == snake1.getBody(i).y)      //생성된 과일위치랑 몸통들위치검사
                     isCollision = true;     
+            }
+            for(auto& w : walls){           //생성된 과일위치랑 벽 위치 비교,
+                if(w.x == fruitPos.x && w.y == fruitPos.y){
+                    isCollision = true;
+                }
             }
         }while(isCollision);
     }
@@ -159,7 +164,7 @@ public:
         cout << endl;
     }
         cout << "점수 : " << score << endl;
-        cout << "예약된 벽 개수 : " << pendingwalls.size() << endl;
+        // cout << "예약된 벽 개수 : " << pendingwalls.size() << endl;
     }
     int getscore(){ return score; }
     bool getisalive(){ return isalive; }
@@ -219,8 +224,11 @@ public:
             scoreplusplus();                           //점수올리기
             mysnake.bodyplusplus();                    //몸통 늘리기
             addpendingwall(eatenFruit.getfruitPos());  //벽 세울자리예약!
-            eatenFruit.spawnFruit(mysnake,otherFruit); //이과일만 스폰!
+            eatenFruit.spawnFruit(mysnake,otherFruit,walls); //이과일만 스폰!
         }
+    }
+    vector<Vector2> getWalls(){
+        return walls;
     }
 };
 
@@ -233,8 +241,8 @@ int main()
     fruit myfruit2;
     gamemanager mygame;
 
-    myfruit.spawnFruit(mysnake,myfruit2);
-    myfruit2.spawnFruit(mysnake,myfruit);
+    myfruit.spawnFruit(mysnake,myfruit2,mygame.getWalls());
+    myfruit2.spawnFruit(mysnake,myfruit,mygame.getWalls());
     
     while(mygame.getisalive()){
         
