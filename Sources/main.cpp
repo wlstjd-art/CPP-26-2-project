@@ -169,6 +169,12 @@ public:
         if(snake1.selfcollision()){
             isalive = false;
         }
+        for(auto& w : walls){
+            if(w.x == snake1.getheadPos().x &&
+               w.y == snake1.getheadPos().y){
+                isalive = false;
+            }
+        }
     }
     void addpendingwall(const Vector2& fruitpos){     // 9-2주차 벡터써보기!
         pendingwalls.push_back(fruitpos); //push_back으로
