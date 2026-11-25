@@ -121,12 +121,14 @@ private:
     vector<Vector2> walls;
     int speed;
     time_t lastEatTime;
+    time_t lastWallTime;
 public:
     gamemanager(){
         isalive = true;
         score = 0;
         speed = 100;
         lastEatTime = time(NULL);
+        lastWallTime = time(NULL);
     }
     void drawBoard(snake& snake1,fruit& fruit1, fruit& fruit2){   
     for(int y = 0; y < H; y++){
@@ -169,11 +171,11 @@ public:
     }
         cout << "점수 : " << score << endl;
         // cout << "예약된 벽 개수 : " << pendingwalls.size() << endl;
-        cout << "속도 : " << speed << endl;
+        // cout << "속도 : " << speed << endl;
         // cout << "마지막먹은시간 " << lastEatTime << endl;
         int remain = 5 - (time(NULL) - lastEatTime);
         if(remain > 0 && speed != 0)  cout << remain << " 초 안에 안먹으면 빨라집니다!!" << endl;
-        else if(remain <= 0) {  //
+        else if(remain <= 0) {  
             if(speed == 0){
                 cout << "랜덤으로 벽이 생성됩니다!";
             }
@@ -248,6 +250,29 @@ public:
     void updateSpeed(){
         if(time(NULL) - lastEatTime >= 5 && speed > 0){ speed -= 2; }
     }
+    void spawnRandomWall(snake& snake1, fruit& fruit1, fruit& fruit2){
+        bool isCollision;
+        int x, y;
+        do{
+            isCollision = false;
+
+            x = (rand() % (W-2)) + 1;
+            y = (rand() % (H-2)) + 1;
+
+            if(x == snake1.getheadPos().x && y == snake1.getheadPos().y)    isCollision = true;
+            else if(x == fruit1.getfruitPos().x && y == fruit1.getfruitPos().y) isCollision = true;
+            else if(x == fruit2.getfruitPos().x && y == fruit2.getfruitPos().y) isCollision = true;
+            for(auto& w : walls){
+                if(w.x == x && w.y == y){ isCollision = true; break; }
+            }
+            for(int i = 0; i < snake1.getbodyLength(); i++){
+                if(snake1.getBody(i).x == x && snake1.getBody(i).y == y){ isCollision = true; break; } 
+            }
+        }while(isCollision);
+        walls.push_back(Vector2{x,y});
+    }
+    time_t getLastWallTime(){ return lastWallTime; }
+    void setLastWallTime(){ lastWallTime = time(NULL); }
 };
 
 int main()
@@ -279,8 +304,11 @@ int main()
         if(mysnake.getheadPos().x == 0 || mysnake.getheadPos().x == W-1 
         || mysnake.getheadPos().y == 0 || mysnake.getheadPos().y == H-1) //벽만나면죽음!!
             mygame.setisalive(false);
-        
         mygame.updateSpeed();
+        if(mygame.getSpeed() == 0 && time(NULL) - mygame.getLastWallTime() >= 1){
+            mygame.spawnRandomWall(mysnake, myfruit, myfruit2);
+            mygame.setLastWallTime();
+        }
         mygame.gameover(mysnake);
         Sleep(mygame.getSpeed());     
     }
