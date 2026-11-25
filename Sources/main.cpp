@@ -119,10 +119,14 @@ private:
     int score;
     vector<Vector2> pendingwalls;
     vector<Vector2> walls;
+    int speed;
+    time_t lastEatTime;
 public:
     gamemanager(){
         isalive = true;
         score = 0;
+        speed = 100;
+        lastEatTime = time(NULL);
     }
     void drawBoard(snake& snake1,fruit& fruit1, fruit& fruit2){   
     for(int y = 0; y < H; y++){
@@ -165,6 +169,16 @@ public:
     }
         cout << "점수 : " << score << endl;
         // cout << "예약된 벽 개수 : " << pendingwalls.size() << endl;
+        cout << "속도 : " << speed << endl;
+        // cout << "마지막먹은시간 " << lastEatTime << endl;
+        int remain = 5 - (time(NULL) - lastEatTime);
+        if(remain > 0 && speed != 0)  cout << remain << " 초 안에 안먹으면 빨라집니다!!" << endl;
+        else if(remain <= 0) {  //
+            if(speed == 0){
+                cout << "랜덤으로 벽이 생성됩니다!";
+            }
+            else if(speed > 0) cout << "가속중";
+        }
     }
     int getscore(){ return score; }
     bool getisalive(){ return isalive; }
@@ -220,7 +234,7 @@ public:
         //머리랑 과일이랑 닿았나?
         if(mysnake.getheadPos().x == eatenFruit.getfruitPos().x && 
            mysnake.getheadPos().y == eatenFruit.getfruitPos().y){ 
-            
+            lastEatTime = time(NULL);
             scoreplusplus();                           //점수올리기
             mysnake.bodyplusplus();                    //몸통 늘리기
             addpendingwall(eatenFruit.getfruitPos());  //벽 세울자리예약!
@@ -230,12 +244,16 @@ public:
     vector<Vector2> getWalls(){
         return walls;
     }
+    int getSpeed(){ return speed; }
+    void updateSpeed(){
+        if(time(NULL) - lastEatTime >= 5 && speed > 0){ speed -= 2; }
+    }
 };
 
 int main()
 {       
     srand(time(NULL)); 
-    
+
     snake mysnake;
     fruit myfruit;
     fruit myfruit2;
@@ -262,9 +280,9 @@ int main()
         || mysnake.getheadPos().y == 0 || mysnake.getheadPos().y == H-1) //벽만나면죽음!!
             mygame.setisalive(false);
         
+        mygame.updateSpeed();
         mygame.gameover(mysnake);
-            
-        Sleep(100);     
+        Sleep(mygame.getSpeed());     
     }
         
 }
