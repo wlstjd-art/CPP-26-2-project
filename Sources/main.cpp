@@ -13,6 +13,16 @@ struct Vector2{
     int y;
 };
 
+//과일 종류 구분
+enum FruitKind { NONE, NORMAL, GOLD, ICE };
+
+//특별과일 랜덤 추첨: 황금 60% / 얼음 40%
+FruitKind rollSpecial(){
+    int pick = rand() % 10;
+    if(pick < 6)  return GOLD;
+    return ICE;
+}
+
 class snake{
 private:
     Vector2 headPos;
@@ -20,7 +30,7 @@ private:
     int bodyLength;
     char dir;
     bool selfcol;
-    int extraSteps; // 대시! x를 눌렀을 때 이번 프레임에 더 이동할 칸 수
+    int extraSteps; // 대시 추가 이동 칸 수
 public:
     snake(){
         headPos = {W/2 , H/2};
@@ -33,8 +43,8 @@ public:
     Vector2 getBody(int i){ return body[i]; }
     int getbodyLength(){ return bodyLength; }
     void bodyplusplus(){ bodyLength++; }
-    void dash(){ extraSteps = 2; } // 일반이동 1칸 + 추가 2칸 = 총 3칸 이동!
-    int takeExtraSteps(){ // 더 갈 칸 수를 가져가면서 바로 0으로 초기화!
+    void dash(){ extraSteps = 2; } // 총 3칸 이동
+    int takeExtraSteps(){ // 추가 칸 수 회수 후 초기화
         int e = extraSteps;
         extraSteps = 0;
         return e;
@@ -88,11 +98,15 @@ public:
 class fruit{
 private:
     Vector2 fruitPos;
+    FruitKind kind;
+    time_t bornTime;    //황금열매 8초 시한용
 public:
     fruit(){
         fruitPos = {-1, -1}; 
+        kind = NONE;
+        bornTime = 0;
     }
-    void spawnFruit(snake& snake1, fruit& fruit1, const vector<Vector2>& walls){
+    void spawnFruit(snake& snake1, fruit& fruit1, const vector<Vector2>& walls, FruitKind k){
         bool isCollision;
         do{ 
             isCollision = false;
@@ -116,8 +130,12 @@ public:
                 }
             }
         }while(isCollision);
+        kind = k;
+        bornTime = time(NULL);
     }
     Vector2 getfruitPos(){ return fruitPos; }
+    FruitKind getkind(){ return kind; }
+    int getage(){ return (int)(time(NULL) - bornTime); }
 
 };
 
@@ -130,6 +148,7 @@ private:
     int speed;
     time_t lastEatTime;
     time_t lastWallTime;
+    DWORD lastDashTick; // 대시 마지막 사용시각 (GetTickCount = 밀리초 단위)
 public:
     gamemanager(){
         isalive = true;
@@ -137,6 +156,7 @@ public:
         speed = 100;
         lastEatTime = time(NULL);
         lastWallTime = time(NULL);
+        lastDashTick = 0;
     }
     void drawBoard(snake& snake1,fruit& fruit1, fruit& fruit2){   
     for(int y = 0; y < H; y++){
@@ -154,7 +174,9 @@ public:
                 cout << 'F';
             }
             else if(x == fruit2.getfruitPos().x && y == fruit2.getfruitPos().y){
-                cout << 'F';
+                if(fruit2.getkind() == GOLD)  cout << 'G';
+                else if(fruit2.getkind() == ICE)  cout << 'I';
+                else cout << 'F';
             }
             else if(isWallAt(x,y)){     
                 cout << '#';        
@@ -177,7 +199,19 @@ public:
         }
         cout << endl;
     }
+        //대시 게이지: 가득 차면 대시 가능
+        cout << "대시 ";
+        int filled = (int)(dashGauge() * 24);
+        for(int i = 0; i < 24; i++){
+            if(i < filled)  cout << "█";
+            else    cout << "░";
+        }
+        if(filled >= 24)  cout << " READY!";
+        cout << endl;
         cout << "점수 : " << score << endl;
+        cout << "[F]일반+1  [G]황금+5(8초 안에 먹어야 함!)  [I]얼음=속도리셋" << endl;
+        if(fruit2.getkind() == GOLD)
+            cout << "황금열매 남은시간 : " << 8 - fruit2.getage() << " 초" << endl;
         // cout << "예약된 벽 개수 : " << pendingwalls.size() << endl;
         // cout << "속도 : " << speed << endl;
         // cout << "마지막먹은시간 " << lastEatTime << endl;
@@ -193,6 +227,7 @@ public:
     int getscore(){ return score; }
     bool getisalive(){ return isalive; }
     void scoreplusplus(){ score++; }
+    void scoreplus(int amount){ score += amount; }
     void setisalive(bool a){ this->isalive = a; }
     void gameover(snake& snake1){
         if(snake1.selfcollision()){
@@ -245,10 +280,18 @@ public:
         if(mysnake.getheadPos().x == eatenFruit.getfruitPos().x && 
            mysnake.getheadPos().y == eatenFruit.getfruitPos().y){ 
             lastEatTime = time(NULL);
-            scoreplusplus();                           //점수올리기
+            FruitKind k = eatenFruit.getkind();
+            if(k == GOLD){
+                scoreplus(5);
+            }
+            else if(k == ICE){
+                speed = 100;
+            }
+            else scoreplusplus();
             mysnake.bodyplusplus();                    //몸통 늘리기
             addpendingwall(eatenFruit.getfruitPos());  //벽 세울자리예약!
-            eatenFruit.spawnFruit(mysnake,otherFruit,walls); //이과일만 스폰!
+            //같은 자리에 재스폰
+            eatenFruit.spawnFruit(mysnake,otherFruit,walls, k == NORMAL ? NORMAL : rollSpecial());
         }
     }
     vector<Vector2> getWalls(){
@@ -257,6 +300,12 @@ public:
     int getSpeed(){ return speed; }
     void updateSpeed(){
         if(time(NULL) - lastEatTime >= 5 && speed > 0){ speed -= 2; }
+    }
+    //황금열매 8초 시한
+    void checkGoldExpire(fruit& special, snake& snake1, fruit& normal){
+        if(special.getkind() == GOLD && special.getage() >= 8){
+            special.spawnFruit(snake1, normal, walls, rollSpecial());
+        }
     }
     void spawnRandomWall(snake& snake1, fruit& fruit1, fruit& fruit2){
         bool isCollision;
@@ -281,6 +330,15 @@ public:
     }
     time_t getLastWallTime(){ return lastWallTime; }
     void setLastWallTime(){ lastWallTime = time(NULL); }
+    //대시 쿨타임 관리 (3초)
+    bool canDash(){ return GetTickCount() - lastDashTick >= 3000; }
+    void usedDash(){ lastDashTick = GetTickCount(); }
+    double dashGauge(){ // 게이지 0~1 충전 비율
+        double g = (double)(GetTickCount() - lastDashTick) / 3000.0;
+        if(g < 0) g = 0;
+        if(g > 1) g = 1;
+        return g;
+    }
 };
 
 int main()
@@ -292,10 +350,8 @@ int main()
     fruit myfruit2;
     gamemanager mygame;
 
-    myfruit.spawnFruit(mysnake,myfruit2,mygame.getWalls());
-    myfruit2.spawnFruit(mysnake,myfruit,mygame.getWalls());
-
-    time_t lastDash = time(NULL); // 대시 쿨타임(3초) 체크용!
+    myfruit.spawnFruit(mysnake,myfruit2,mygame.getWalls(),NORMAL);      //일반 자리
+    myfruit2.spawnFruit(mysnake,myfruit,mygame.getWalls(),rollSpecial()); //특별 자리
     
     while(mygame.getisalive()){
         
@@ -303,20 +359,20 @@ int main()
         mygame.drawBoard(mysnake,myfruit,myfruit2);
         
         if(_kbhit()){   //사용자입력받기
-            char key = _getch();  //키를 먼저 변수에 담아야 구분할 수 있다!
-            if(key == 'x'){       //대시! 단 쿨타임 3초
-                if(time(NULL) - lastDash >= 3){
+            char key = _getch();
+            if(key == ' '){       //대시 (쿨타임 3초)
+                if(mygame.canDash()){
                     mysnake.dash();
-                    lastDash = time(NULL);
+                    mygame.usedDash();
                 }
             }
             else mysnake.changedir(key);
         }
         mysnake.move();
-        //대시 실행! 이번 프레임에 추가 이동이 정해져 있으면 칸씩 더 이동
+        //대시 추가 이동
         int extra = mysnake.takeExtraSteps();
         for(int i = 0; i < extra; i++){
-            //이동 중에 이미 외벽에 닿았다면 더 뚫지 않고 여기서 정지
+            //외벽 닿으면 정지
             if(mysnake.getheadPos().x == 0 || mysnake.getheadPos().x == W-1
             || mysnake.getheadPos().y == 0 || mysnake.getheadPos().y == H-1) break;
             mysnake.move();
@@ -325,6 +381,7 @@ int main()
 
         mygame.checkEatFruit(mysnake,myfruit,myfruit2); 
         mygame.checkEatFruit(mysnake,myfruit2,myfruit); 
+        mygame.checkGoldExpire(myfruit2,mysnake,myfruit);
 
         if(mysnake.getheadPos().x == 0 || mysnake.getheadPos().x == W-1 
         || mysnake.getheadPos().y == 0 || mysnake.getheadPos().y == H-1) //벽만나면죽음!!
