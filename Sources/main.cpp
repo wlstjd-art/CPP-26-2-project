@@ -20,17 +20,25 @@ private:
     int bodyLength;
     char dir;
     bool selfcol;
+    int extraSteps; // 대시! x를 눌렀을 때 이번 프레임에 더 이동할 칸 수
 public:
     snake(){
         headPos = {W/2 , H/2};
         bodyLength = 0;
         dir = 'd';
         selfcol = false;
+        extraSteps = 0;
     }
     Vector2 getheadPos(){ return headPos; }
     Vector2 getBody(int i){ return body[i]; }
     int getbodyLength(){ return bodyLength; }
     void bodyplusplus(){ bodyLength++; }
+    void dash(){ extraSteps = 2; } // 일반이동 1칸 + 추가 2칸 = 총 3칸 이동!
+    int takeExtraSteps(){ // 더 갈 칸 수를 가져가면서 바로 0으로 초기화!
+        int e = extraSteps;
+        extraSteps = 0;
+        return e;
+    }
     void changedir(char Tempdir){
         // char Tempdir = _getch();
         if(Tempdir == 'w'||Tempdir == 'a'||Tempdir == 's'||Tempdir == 'd'){   // w , a, s, d일떄만 키보드인풋 허용!
@@ -286,6 +294,8 @@ int main()
 
     myfruit.spawnFruit(mysnake,myfruit2,mygame.getWalls());
     myfruit2.spawnFruit(mysnake,myfruit,mygame.getWalls());
+
+    time_t lastDash = time(NULL); // 대시 쿨타임(3초) 체크용!
     
     while(mygame.getisalive()){
         
@@ -293,9 +303,24 @@ int main()
         mygame.drawBoard(mysnake,myfruit,myfruit2);
         
         if(_kbhit()){   //사용자입력받기
-            mysnake.changedir(_getch());
+            char key = _getch();  //키를 먼저 변수에 담아야 구분할 수 있다!
+            if(key == 'x'){       //대시! 단 쿨타임 3초
+                if(time(NULL) - lastDash >= 3){
+                    mysnake.dash();
+                    lastDash = time(NULL);
+                }
+            }
+            else mysnake.changedir(key);
         }
         mysnake.move();
+        //대시 실행! 이번 프레임에 추가 이동이 정해져 있으면 칸씩 더 이동
+        int extra = mysnake.takeExtraSteps();
+        for(int i = 0; i < extra; i++){
+            //이동 중에 이미 외벽에 닿았다면 더 뚫지 않고 여기서 정지
+            if(mysnake.getheadPos().x == 0 || mysnake.getheadPos().x == W-1
+            || mysnake.getheadPos().y == 0 || mysnake.getheadPos().y == H-1) break;
+            mysnake.move();
+        }
         mygame.addWall(mysnake);
 
         mygame.checkEatFruit(mysnake,myfruit,myfruit2); 
